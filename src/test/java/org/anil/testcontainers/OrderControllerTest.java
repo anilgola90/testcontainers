@@ -1,7 +1,9 @@
 package org.anil.testcontainers;
 
-import org.anil.testcontainers.entity.OrderEntity;
-import org.anil.testcontainers.repository.OrderEntityRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.anil.testcontainers.test1.entity.OrderEntity;
+import org.anil.testcontainers.test1.repository.OrderEntityRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -17,14 +18,13 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @Testcontainers
 class OrderControllerTest {
 
     static final MySQLContainer MY_SQL_CONTAINER;
+
 
     @Autowired
     WebTestClient webTestClient;
@@ -34,6 +34,10 @@ class OrderControllerTest {
 
     static {
         MY_SQL_CONTAINER = new MySQLContainer("mysql:latest");
+        MY_SQL_CONTAINER.withUsername("root")
+                        .withDatabaseName("containers")
+                        .withPassword("root1234")
+                        .withInitScript("init.sql");
         MY_SQL_CONTAINER.start();
     }
 
@@ -43,7 +47,6 @@ class OrderControllerTest {
         registry.add("spring.datasource.username",() -> MY_SQL_CONTAINER.getUsername());
         registry.add("spring.datasource.password",() -> MY_SQL_CONTAINER.getPassword());
         registry.add("spring.jpa.hibernate.ddl-auto",() -> "create");
-
     }
 
     @BeforeEach
@@ -57,6 +60,9 @@ class OrderControllerTest {
     public void afterEach(){
         orderEntityRepository.deleteAll();
     }
+
+    @PersistenceContext
+    EntityManager entityManager;
 
     @Test
     void saveOrderEntity() {
@@ -73,6 +79,9 @@ class OrderControllerTest {
                 .is2xxSuccessful()
                 .expectBody(OrderEntity.class)
                 .consumeWith(orderentity -> Assertions.assertNotNull(orderentity.getResponseBody().getId()));
+
+       var abc =  entityManager.createNativeQuery("select e.name from todo1.employee e");
+       var cba = abc.getResultList();
     }
 
     @Test

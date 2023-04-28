@@ -1,4 +1,4 @@
-package org.anil.testcontainers.entity;
+package org.anil.testcontainers.test1.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
